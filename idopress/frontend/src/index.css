@@ -102,11 +102,138 @@
   text-align: justify;
 }
 
+/* 고급 그라디언트 및 효과 */
+.bg-gradient-radial {
+  background-image: radial-gradient(var(--tw-gradient-stops));
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 한국 전통 색상 변수 */
+:root {
+  --korean-blue: #003F7F;
+  --korean-red: #C41E3A;
+  --korean-yellow: #FFD700;
+  --korean-green: #228B22;
+  --hanbok-blue: #0F4C81;
+  --hanbok-red: #CD2E57;
+}
+
+/* 텍스트 그라디언트 효과 */
+.text-gradient-primary {
+  background: linear-gradient(135deg, var(--korean-blue), #1e40af);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-accent {
+  background: linear-gradient(135deg, var(--korean-red), #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* 카드 호버 효과 강화 */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+/* 버튼 효과 */
+.btn-primary {
+  background: linear-gradient(135deg, var(--korean-blue), #1e40af);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1e40af, var(--korean-blue));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--korean-yellow), #f59e0b);
+  transition: all 0.3s ease;
+}
+
+.btn-accent:hover {
+  background: linear-gradient(135deg, #f59e0b, var(--korean-yellow));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+}
+
+/* 로딩 애니메이션 */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* 스크롤 진행 바 */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--korean-yellow), var(--korean-red), var(--korean-blue));
+  transform-origin: left;
+  z-index: 9999;
+}
+
+/* 한국 전통 패턴 배경 */
+.korean-pattern {
+  background-image: radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.1) 2px, transparent 0),
+                    radial-gradient(circle at 75px 75px, rgba(255, 255, 255, 0.05) 2px, transparent 0);
+  background-size: 100px 100px;
+}
+
+/* 텍스트 선택 스타일 */
+::selection {
+  background-color: rgba(var(--korean-blue), 0.2);
+  color: var(--korean-blue);
+}
+
+::-moz-selection {
+  background-color: rgba(var(--korean-blue), 0.2);
+  color: var(--korean-blue);
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .text-viewer {
     padding: 1rem;
     font-size: 1rem;
     line-height: 1.8;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+}
+
+/* 다크 모드 지원 (미래 확장용) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #1a1a1a;
   }
 }
