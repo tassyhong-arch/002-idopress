@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: idopress-db
+    environment:
+      POSTGRES_DB: idopress
+      POSTGRES_USER: idopress_user
+      POSTGRES_PASSWORD: idopress_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - idopress-network
+
+  # Flask Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: idopress-backend
+    environment:
+      - FLASK_ENV=development
+      - DATABASE_URL=postgresql://idopress_user:idopress_password@postgres:5432/idopress
+      - JWT_SECRET_KEY=your-secret-key-here
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    networks:
+      - idopress-network
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: idopress-frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - idopress-network
+
+volumes:
+  postgres_data:
+
+networks:
+  idopress-network:
+    driver: bridge
