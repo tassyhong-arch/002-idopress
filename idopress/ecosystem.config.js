@@ -22,11 +22,12 @@ module.exports = {
     {
       name: 'idopress-frontend',
       script: 'npm',
-      args: 'run dev',
+      args: 'run dev -- --host 0.0.0.0',
       cwd: '/home/user/webapp/idopress/frontend',
       env: {
         PORT: 3000,
-        VITE_API_URL: 'http://localhost:5000/api'
+        HOST: '0.0.0.0',
+        VITE_API_URL: 'https://5000-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev/api'
       },
       instances: 1,
       autorestart: true,
