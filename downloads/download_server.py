@@ -42,11 +42,13 @@ class DownloadHandler(SimpleHTTPRequestHandler):
     <div class="download-box">
         <h2>🚀 메인 다운로드 (추천)</h2>
         <div class="file-info">
-            <strong>파일명:</strong> idopress_complete_ftp.tar.gz<br>
-            <strong>크기:</strong> 286KB<br>
-            <strong>포함내용:</strong> 프론트엔드 + 백엔드 + 설정파일 (완전 패키지)
+            <strong>파일명:</strong> idopress_complete_ftp_v2.tar.gz<br>
+            <strong>크기:</strong> 560KB<br>
+            <strong>포함내용:</strong> 프론트엔드 + 백엔드 + 설정파일 + 이북뷰어 (완전 패키지)
+            <br><strong>🆕 새 기능:</strong> 한국 고전문학 이북 뷰어, 원문/현대어 번역
         </div>
-        <a href="idopress_complete_ftp.tar.gz" class="btn" download>📥 완전 패키지 다운로드</a>
+        <a href="idopress_complete_ftp_v2.tar.gz" class="btn" download>📥 완전 패키지 다운로드 (최신)</a>
+        <a href="idopress_complete_ftp.tar.gz" class="btn" style="background: #6b7280;" download>📥 이전 버전 (286KB)</a>
     </div>
     
     <div class="download-box">
