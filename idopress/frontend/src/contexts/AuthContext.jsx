@@ -21,7 +21,16 @@ export function AuthProvider({ children }) {
       const savedToken = localStorage.getItem('token');
       if (savedToken) {
         try {
-          const userData = await authService.getProfile();
+          // Set timeout for API call
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('API timeout')), 5000)
+          );
+          
+          const userData = await Promise.race([
+            authService.getProfile(),
+            timeoutPromise
+          ]);
+          
           setUser(userData.user);
           setToken(savedToken);
         } catch (error) {
@@ -34,7 +43,15 @@ export function AuthProvider({ children }) {
       setLoading(false);
     };
 
-    initAuth();
+    // Add timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.warn('Auth loading timeout, proceeding without auth');
+      setLoading(false);
+    }, 3000);
+
+    initAuth().finally(() => {
+      clearTimeout(loadingTimeout);
+    });
   }, []);
 
   const login = async (username, password) => {
