@@ -1,0 +1,50 @@
+이도출판 디지털 장서각 - 배포 가이드
+===========================================
+
+📁 파일 구조:
+├── index.html              # 메인 홈페이지
+├── vite.svg               # 파비콘
+├── assets/                # CSS, JS 파일
+│   ├── index-EDbC2ccZ.css # 스타일시트 (56KB - Tailwind CSS 포함)
+│   └── index-Cm-n1bGS.js  # React 앱 (196KB)
+├── backend/               # Flask API 서버
+└── *.conf                # 서버 설정 파일
+
+🚀 웹서버 배포 방법:
+
+1. Apache 서버:
+   - 모든 파일을 document root (예: /var/www/html/)에 업로드
+   - .htaccess 설정: 
+     RewriteEngine On
+     RewriteCond %{REQUEST_FILENAME} !-f
+     RewriteCond %{REQUEST_FILENAME} !-d
+     RewriteRule . /index.html [L]
+
+2. Nginx 서버:
+   - 모든 파일을 웹 루트에 업로드
+   - nginx.conf에 다음 추가:
+     location / {
+         try_files $uri $uri/ /index.html;
+     }
+
+3. 단순 테스트:
+   python3 -m http.server 80
+
+🎨 디자인 특징:
+- Project Gutenberg 클래식 스타일
+- 한국 고전문학 테마
+- 완전 반응형 디자인
+- 실시간 검색 및 필터링
+
+⚠️  중요사항:
+1. CSS/JS 파일 경로가 절대경로(/)로 설정되어 있음
+2. 서버의 document root에 직접 업로드해야 함
+3. 하위 디렉토리에 설치할 경우 index.html 수정 필요
+
+🔧 문제 해결:
+- CSS가 안 보이면: assets/ 폴더 권한 확인 (chmod 755)
+- 흰 화면이면: 브라우저 개발자 도구에서 콘솔 오류 확인
+- 404 오류: 웹서버 rewrite 규칙 확인
+
+연락처: GenSpark AI Assistant
+생성일: 2024-09-10

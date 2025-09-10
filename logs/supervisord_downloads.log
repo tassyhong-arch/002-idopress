@@ -1,0 +1,6 @@
+2025-09-10 10:23:30,107 INFO RPC interface 'supervisor' initialized
+2025-09-10 10:23:30,107 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-09-10 10:23:30,109 INFO daemonizing the supervisord process
+2025-09-10 10:23:30,110 INFO supervisord started with pid 23905
+2025-09-10 10:23:31,114 INFO spawned: 'download_server' with pid 23928
+2025-09-10 10:23:32,116 INFO success: download_server entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>이도출판 이북뷰어 - 교보문고 스타일</title>
+    <meta name="description" content="교보문고 스타일의 전문 이북뷰어 - React + EPUB.js" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #f8f9fa;
+      }
+      
+      #root {
+        height: 100%;
+      }
+      
+      /* 로딩 스크린 */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-family: 'Noto Sans KR', sans-serif;
+        z-index: 9999;
+      }
+      
+      .loading-content {
+        text-align: center;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        font-size: 18px;
+        font-weight: 500;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- 초기 로딩 화면 -->
+      <div class="loading-screen" id="initial-loading">
+        <div class="loading-content">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">이북뷰어를 불러오는 중...</div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      // React 앱이 로드되면 초기 로딩 화면 숨기기
+      window.addEventListener('load', () => {
+        const loadingScreen = document.getElementById('initial-loading');
+        if (loadingScreen) {
+          setTimeout(() => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+              loadingScreen.remove();
+            }, 300);
+          }, 500);
+        }
+      });
+    </script>
+    
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

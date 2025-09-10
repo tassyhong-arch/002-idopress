@@ -1,0 +1,7 @@
+127.0.0.1 - - [10/Sep/2025 10:23:42] "HEAD / HTTP/1.1" 200 -
+10.12.123.96 - - [10/Sep/2025 10:24:23] "GET / HTTP/1.1" 200 -
+10.12.123.96 - - [10/Sep/2025 10:24:23] code 404, message File not found
+10.12.123.96 - - [10/Sep/2025 10:24:23] "GET /favicon.ico HTTP/1.1" 404 -
+10.12.123.96 - - [10/Sep/2025 10:24:31] "GET /idopress_deploy_ready.tar.gz HTTP/1.1" 200 -
+10.12.123.96 - - [10/Sep/2025 10:36:56] "GET / HTTP/1.1" 200 -
+10.12.123.96 - - [10/Sep/2025 10:37:08] "GET /idopress_complete_website_final.tar.gz HTTP/1.1" 200 -
