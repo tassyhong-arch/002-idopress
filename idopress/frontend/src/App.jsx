@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import ClassicTextViewer from './ebook/components/ClassicTextViewer';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [books, setBooks] = useState([]);
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [showEbookViewer, setShowEbookViewer] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const categories = [
     { id: 'all', name: '전체', count: 234 },
@@ -12,14 +17,43 @@ function App() {
     { id: 'history', name: '역사', count: 37 }
   ];
 
-  const featuredBooks = [
-    { id: 1, title: '춘향전', author: '작자 미상', year: '조선 후기', category: '소설', views: 1234 },
-    { id: 2, title: '구운몽', author: '김만중', year: '1687', category: '소설', views: 987 },
-    { id: 3, title: '사씨남정기', author: '김만중', year: '1689', category: '소설', views: 756 },
-    { id: 4, title: '홍길동전', author: '허균', year: '1612', category: '소설', views: 2341 },
-    { id: 5, title: '토끼전', author: '작자 미상', year: '조선 후기', category: '소설', views: 543 },
-    { id: 6, title: '심청전', author: '작자 미상', year: '조선 후기', category: '소설', views: 876 }
-  ];
+  // API 기본 URL
+  const API_BASE_URL = 'https://5000-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev/api';
+
+  // 책 목록 로드
+  const loadBooks = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/books`);
+      const data = await response.json();
+      setBooks(data.books || []);
+    } catch (error) {
+      console.error('책 목록 로드 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 책 상세 정보 로드 및 뷰어 열기
+  const openEbookViewer = async (bookId) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/books/${bookId}`);
+      const data = await response.json();
+      setSelectedBook(data.book);
+      setShowEbookViewer(true);
+    } catch (error) {
+      console.error('책 상세 정보 로드 실패:', error);
+      alert('이북을 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 컴포넌트 마운트 시 책 목록 로드
+  useEffect(() => {
+    loadBooks();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -114,22 +148,26 @@ function App() {
         <section className="mb-12">
           <h2 className="text-2xl font-serif text-gray-800 mb-6">추천 고전 작품</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredBooks.map((book) => (
+            {books.slice(0, 6).map((book) => (
               <div key={book.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-200 hover:border-blue-400">
                 <h3 className="text-xl font-serif text-blue-900 mb-2 hover:text-blue-700 cursor-pointer">
                   {book.title}
                 </h3>
                 <div className="text-gray-600 mb-2">
                   <div>저자: {book.author}</div>
-                  <div>연도: {book.year}</div>
-                  <div>분류: {book.category}</div>
+                  <div>시대: {book.era}</div>
+                  <div>장르: {book.genre}</div>
                 </div>
                 <div className="flex justify-between items-center mt-4">
                   <span className="text-sm text-gray-500">
-                    조회수: {book.views.toLocaleString()}
+                    조회수: {book.view_count?.toLocaleString() || 0}
                   </span>
-                  <button className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline">
-                    읽기 →
+                  <button 
+                    onClick={() => openEbookViewer(book.id)}
+                    className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                    disabled={loading}
+                  >
+                    {loading ? '로딩...' : '읽기 →'}
                   </button>
                 </div>
               </div>
@@ -180,6 +218,17 @@ function App() {
           </div>
         </section>
       </main>
+
+      {/* 이북 뷰어 모달 */}
+      {showEbookViewer && selectedBook && (
+        <ClassicTextViewer 
+          book={selectedBook}
+          onClose={() => {
+            setShowEbookViewer(false);
+            setSelectedBook(null);
+          }}
+        />
+      )}
 
       {/* 푸터 */}
       <footer className="bg-gray-800 text-white mt-16">
