@@ -1,0 +1,16 @@
+# 이 내용을 복사해서 api/.env 파일로 저장하세요
+
+# 데이터베이스 설정 (MySQL - cPanel 호스팅용)
+DATABASE_URL=mysql://데이터베이스사용자명:비밀번호@localhost/데이터베이스명
+
+# 예시: DATABASE_URL=mysql://idopress_user:mypassword123@localhost/idopress_db
+
+# JWT 보안 키 (임의의 긴 문자열로 변경하세요)
+JWT_SECRET_KEY=your-super-secret-jwt-key-change-this-to-random-long-string
+
+# Flask 환경 설정
+FLASK_ENV=production
+FLASK_DEBUG=False
+
+# 업로드 폴더 경로
+UPLOAD_FOLDER=/home/계정명/public_html/api/uploads

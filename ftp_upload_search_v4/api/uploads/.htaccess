@@ -1,0 +1,17 @@
+# 업로드 폴더 보안 설정
+# 직접 접근 차단, 스크립트 실행 방지
+
+# 디렉토리 목록 표시 차단
+Options -Indexes
+
+# PHP, Python 등 스크립트 실행 차단
+<FilesMatch "\.(py|php|pl|cgi|sh)$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>
+
+# 특정 파일 확장자만 허용
+<FilesMatch "\.(txt|pdf|epub|doc|docx|rtf)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>

@@ -1,0 +1,33 @@
+# 후이즈 호스팅용 .htaccess 설정 (자동 설정됨)
+RewriteEngine On
+
+# API 요청을 Python 앱으로 전달
+RewriteCond %{REQUEST_URI} ^/api/(.*)$
+RewriteRule ^api/(.*)$ /api/$1 [QSA,L]
+
+# 프론트엔드 SPA 라우팅
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule . /index.html [L]
+
+# CORS 설정
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS, DELETE, PUT"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# 정적 파일 캐싱
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/* "access plus 1 month"
+</IfModule>
+
+# 보안 설정
+<Files ".env">
+    Order deny,allow
+    Deny from all
+</Files>

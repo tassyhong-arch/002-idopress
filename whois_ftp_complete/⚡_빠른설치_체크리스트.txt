@@ -1,0 +1,17 @@
+🎯 후이즈 호스팅 빠른 설치 체크리스트
+
+□ 1. 기존 public_html 폴더 완전 삭제
+□ 2. 새 파일들 모두 업로드 (index.html, assets, api, .htaccess 등)
+□ 3. cPanel → MySQL 데이터베이스 → "idopress" 생성
+□ 4. MySQL 사용자 → "idopress_user" 생성 (비밀번호: idopress123)
+□ 5. 사용자를 데이터베이스에 연결 (모든 권한)
+□ 6. phpMyAdmin → SQL 탭 → database_setup.sql 내용 실행
+□ 7. cPanel → Python App → 새 앱 생성 (root: api, startup: app.py)
+□ 8. Python 패키지 설치: Flask, Flask-SQLAlchemy, PyMySQL 등
+□ 9. 테스트: https://도메인.co.kr/api/health 접속
+□ 10. 검색 테스트: 메인페이지에서 "춘향" 검색
+
+✅ 완료시: 완전한 검색 기능이 있는 디지털 도서관 완성!
+
+관리자 계정: admin / admin123
+샘플 검색어: 춘향, 홍길동, 삼국유사

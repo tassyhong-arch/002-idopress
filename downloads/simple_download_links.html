@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이도출판 검색기능 완료판 다운로드</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            text-align: center;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+        }
+        .download-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+        .main-download {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+        .download-btn {
+            display: inline-block;
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px 10px 10px 0;
+            transition: background-color 0.3s;
+        }
+        .download-btn:hover {
+            background: #1d4ed8;
+        }
+        .secondary-btn {
+            background: #6b7280;
+        }
+        .secondary-btn:hover {
+            background: #4b5563;
+        }
+        .file-info {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+        .feature-list {
+            background: #f0f9ff;
+            padding: 15px;
+            border-left: 4px solid #0284c7;
+            margin: 15px 0;
+        }
+        .feature-list ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .installation {
+            background: #fffbeb;
+            padding: 15px;
+            border-left: 4px solid #f59e0b;
+            margin: 15px 0;
+        }
+        .code {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 이도출판 디지털 장서각 v4</h1>
+        <h2 style="text-align: center; color: #059669;">검색기능 완료판 다운로드</h2>
+        
+        <div class="download-section main-download">
+            <h3>📦 메인 다운로드 파일</h3>
+            <a href="idopress_complete_with_search_v4.tar.gz" class="download-btn">
+                💾 idopress_complete_with_search_v4.tar.gz
+            </a>
+            <div class="file-info">
+                📁 크기: 433KB | 📅 생성일: 2024년 9월 14일 | ✅ 검색기능 완료
+            </div>
+            
+            <div class="feature-list">
+                <h4>✨ 포함된 기능들:</h4>
+                <ul>
+                    <li><strong>실시간 검색</strong> - 작품명, 저자명, 설명 통합검색</li>
+                    <li><strong>장르별 분류</strong> - 문학, 역사 등 동적 필터링</li>
+                    <li><strong>페이지네이션</strong> - 완전한 페이지 네비게이션</li>
+                    <li><strong>한국어 지원</strong> - 춘향전, 홍길동전 등 한글 완벽 지원</li>
+                    <li><strong>관리자 시스템</strong> - JWT 인증 기반 도서 관리</li>
+                    <li><strong>이북 뷰어</strong> - 원문/현대어 번역 토글</li>
+                    <li><strong>반응형 UI</strong> - 모바일/데스크톱 최적화</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <h3>📋 추가 파일들</h3>
+            <a href="README_검색기능_업데이트_v4.md" class="download-btn secondary-btn">
+                📖 설치 가이드 (README)
+            </a>
+            <a href="deploy_search_functionality.sh" class="download-btn secondary-btn">
+                🚀 자동 설치 스크립트
+            </a>
+            <div class="file-info">
+                설치 방법, 사용법, 기술 정보가 포함된 상세 가이드
+            </div>
+        </div>
+
+        <div class="installation">
+            <h3>🚀 빠른 설치 (Linux/Mac)</h3>
+            <div class="code">
+# 1. 파일 다운로드<br>
+wget https://8000-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev/idopress_complete_with_search_v4.tar.gz<br>
+wget https://8000-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev/deploy_search_functionality.sh<br><br>
+# 2. 자동 설치 실행<br>
+chmod +x deploy_search_functionality.sh<br>
+./deploy_search_functionality.sh
+            </div>
+        </div>
+
+        <div class="feature-list">
+            <h3>🎯 검색 기능 사용법</h3>
+            <ul>
+                <li><strong>텍스트 검색:</strong> 메인 페이지 검색창에서 "춘향", "홍길동" 등 입력</li>
+                <li><strong>장르별 찾기:</strong> "문학", "역사" 버튼 클릭으로 분류별 검색</li>
+                <li><strong>페이지 이동:</strong> 하단 페이지 번호로 다음/이전 페이지 탐색</li>
+                <li><strong>검색 초기화:</strong> "전체보기" 버튼으로 검색 해제</li>
+            </ul>
+        </div>
+
+        <div class="installation">
+            <h3>⚙️ 시스템 요구사항</h3>
+            <ul>
+                <li><strong>백엔드:</strong> Python 3.8+, PostgreSQL</li>
+                <li><strong>프론트엔드:</strong> Node.js 16+, npm</li>
+                <li><strong>운영체제:</strong> Linux, macOS, Windows</li>
+                <li><strong>웹브라우저:</strong> Chrome, Firefox, Safari (최신 버전)</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+            <p><strong>🌐 데모 사이트:</strong> <a href="https://3001-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev" target="_blank">https://3001-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev</a></p>
+            <p><strong>📡 API 서버:</strong> <a href="https://5000-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev/api" target="_blank">https://5000-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev/api</a></p>
+            <p style="color: #6b7280; margin-top: 20px;">이도출판 디지털 장서각 v4.0 - 검색 및 분류 기능 완료판</p>
+        </div>
+    </div>
+</body>
+</html>

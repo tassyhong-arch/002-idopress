@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이도출판 디지털 장서각 - 임시 프론트엔드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-50">
+    <!-- 헤더 -->
+    <header class="bg-white border-b-2 border-blue-900 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="text-center mb-6">
+                <h1 class="text-4xl font-serif text-blue-900 mb-2">
+                    이도출판 디지털 장서각
+                </h1>
+                <p class="text-lg text-gray-600 font-light">
+                    한국 고전문학의 디지털 아카이브 - 프론트엔드 테스트
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="max-w-6xl mx-auto px-4 py-8">
+        <!-- 상태 표시 -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-blue-800 mb-4">🎯 프론트엔드 테스트 모드</h2>
+            <div id="status" class="space-y-2">
+                <div class="flex items-center">
+                    <span class="w-4 h-4 bg-green-500 rounded-full mr-3"></span>
+                    <span>✅ HTML 페이지 로딩 완료</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="w-4 h-4 bg-green-500 rounded-full mr-3"></span>
+                    <span>✅ CSS 스타일링 적용 완료</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="w-4 h-4 bg-yellow-500 rounded-full mr-3"></span>
+                    <span id="api-status">⏳ API 서버 연결 테스트 중...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 검색 섹션 -->
+        <section class="mb-12">
+            <div class="bg-white rounded-lg shadow-md p-8 border-l-4 border-blue-500">
+                <h2 class="text-2xl font-serif text-gray-800 mb-6 text-center">
+                    한국 고전문학 검색
+                </h2>
+                
+                <div class="max-w-2xl mx-auto">
+                    <div class="relative mb-4">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="작품명, 저자명, 또는 키워드를 입력하세요..."
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+                        />
+                        <button 
+                            id="searchBtn"
+                            class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors"
+                        >
+                            검색
+                        </button>
+                    </div>
+                    
+                    <div class="text-center text-sm text-gray-600">
+                        <div id="bookCount">프론트엔드 테스트 모드 - 백엔드 연결 후 실제 데이터가 표시됩니다</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 카테고리 섹션 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-serif text-gray-800 mb-6">분류별 찾기</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <button class="p-4 rounded-lg border-2 border-blue-500 bg-blue-50 text-blue-700 transition-all hover:shadow-md">
+                    <div class="text-lg font-medium">전체</div>
+                    <div class="text-sm text-gray-600">0권</div>
+                </button>
+                <button class="p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all hover:shadow-md">
+                    <div class="text-lg font-medium">문학</div>
+                    <div class="text-sm text-gray-600">0권</div>
+                </button>
+                <button class="p-4 rounded-lg border-2 border-gray-200 bg-white hover:border-gray-300 transition-all hover:shadow-md">
+                    <div class="text-lg font-medium">역사</div>
+                    <div class="text-sm text-gray-600">0권</div>
+                </button>
+            </div>
+        </section>
+
+        <!-- 테스트 도서 목록 -->
+        <section class="mb-12">
+            <h2 class="text-2xl font-serif text-gray-800 mb-6">샘플 고전 작품 (테스트 데이터)</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-200 hover:border-blue-400">
+                    <h3 class="text-xl font-serif text-blue-900 mb-2 hover:text-blue-700 cursor-pointer">춘향전</h3>
+                    <div class="text-gray-600 mb-2">
+                        <div>저자: 작자 미상</div>
+                        <div>시대: 조선시대</div>
+                        <div>장르: 문학</div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-sm text-gray-500">조회수: 2,342</span>
+                        <button class="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline">읽기 →</button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-200 hover:border-blue-400">
+                    <h3 class="text-xl font-serif text-blue-900 mb-2 hover:text-blue-700 cursor-pointer">홍길동전</h3>
+                    <div class="text-gray-600 mb-2">
+                        <div>저자: 허균</div>
+                        <div>시대: 조선시대</div>
+                        <div>장르: 문학</div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-sm text-gray-500">조회수: 1,987</span>
+                        <button class="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline">읽기 →</button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-200 hover:border-blue-400">
+                    <h3 class="text-xl font-serif text-blue-900 mb-2 hover:text-blue-700 cursor-pointer">삼국유사</h3>
+                    <div class="text-gray-600 mb-2">
+                        <div>저자: 일연</div>
+                        <div>시대: 고려시대</div>
+                        <div>장르: 역사</div>
+                    </div>
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-sm text-gray-500">조회수: 1,249</span>
+                        <button class="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline">읽기 →</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // API 연결 테스트
+        async function testAPI() {
+            const apiStatus = document.getElementById('api-status');
+            
+            try {
+                // 상대 경로로 API 테스트
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    apiStatus.innerHTML = '✅ API 서버 연결 성공! 백엔드가 정상 작동합니다.';
+                    apiStatus.previousElementSibling.className = 'w-4 h-4 bg-green-500 rounded-full mr-3';
+                    
+                    // 실제 도서 데이터 로드 시도
+                    loadBooks();
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                apiStatus.innerHTML = `❌ API 서버 연결 실패: ${error.message} - 백엔드 설정이 필요합니다.`;
+                apiStatus.previousElementSibling.className = 'w-4 h-4 bg-red-500 rounded-full mr-3';
+            }
+        }
+        
+        // 도서 데이터 로드
+        async function loadBooks() {
+            try {
+                const response = await fetch('/api/books');
+                const data = await response.json();
+                
+                if (data.books && data.books.length > 0) {
+                    document.getElementById('bookCount').innerHTML = 
+                        `총 <span class="font-semibold text-blue-700">${data.total}</span>권의 고전 작품을 소장하고 있습니다.`;
+                }
+            } catch (error) {
+                console.log('도서 데이터 로드 실패:', error);
+            }
+        }
+        
+        // 페이지 로드시 API 테스트 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(testAPI, 1000);
+            
+            // 검색 버튼 테스트
+            document.getElementById('searchBtn').addEventListener('click', function() {
+                const searchTerm = document.getElementById('searchInput').value;
+                if (searchTerm) {
+                    alert(`검색어: "${searchTerm}"\n\n백엔드 연결 후 실제 검색 기능이 작동합니다.`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
