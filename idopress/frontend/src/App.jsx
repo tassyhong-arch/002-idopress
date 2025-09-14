@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ClassicTextViewer from './ebook/components/ClassicTextViewer';
+import AdminPanel from './components/AdminPanel';
 
 function App() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -7,6 +8,7 @@ function App() {
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
   const [showEbookViewer, setShowEbookViewer] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const categories = [
@@ -89,6 +91,12 @@ function App() {
             <a href="#" className="text-blue-700 hover:text-blue-900 hover:underline transition-all px-3 py-1 rounded">
               정보
             </a>
+            <button 
+              onClick={() => setShowAdminPanel(true)}
+              className="text-purple-700 hover:text-purple-900 hover:underline transition-all px-3 py-1 rounded"
+            >
+              관리자
+            </button>
           </nav>
         </div>
       </header>
@@ -227,6 +235,13 @@ function App() {
             setShowEbookViewer(false);
             setSelectedBook(null);
           }}
+        />
+      )}
+
+      {/* 관리자 패널 모달 */}
+      {showAdminPanel && (
+        <AdminPanel 
+          onClose={() => setShowAdminPanel(false)}
         />
       )}
 

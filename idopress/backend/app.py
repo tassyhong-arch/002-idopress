@@ -5,14 +5,17 @@
 """
 
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 import bcrypt
+import uuid
+from functools import wraps
 
 # Flask 앱 생성 및 설정
 app = Flask(__name__)
@@ -26,11 +29,35 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-here')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 
+# 파일 업로드 설정
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB 최대 파일 크기
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'epub', 'doc', 'docx', 'rtf'}
+
 # 확장 모듈 초기화
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
 CORS(app)
+
+# 업로드 폴더 생성
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# 헬퍼 함수들
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def admin_required(f):
+    """관리자 권한 필요 데코레이터"""
+    @wraps(f)
+    @jwt_required()
+    def decorated(*args, **kwargs):
+        user_id = get_jwt_identity()
+        user = User.query.get(int(user_id))
+        if not user or not user.is_admin:
+            return jsonify({'error': 'Admin access required'}), 403
+        return f(*args, **kwargs)
+    return decorated
 
 # 데이터베이스 모델 정의
 
@@ -43,6 +70,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
+    is_admin = db.Column(db.Boolean, default=False)  # 관리자 권한
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     
@@ -64,6 +92,7 @@ class User(db.Model):
             'username': self.username,
             'email': self.email,
             'is_active': self.is_active,
+            'is_admin': self.is_admin,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_login': self.last_login.isoformat() if self.last_login else None
         }
@@ -86,6 +115,12 @@ class Book(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_public = db.Column(db.Boolean, default=True)
     view_count = db.Column(db.Integer, default=0)
+    
+    # 파일 관련 필드
+    file_path = db.Column(db.String(255))  # 업로드된 파일 경로
+    file_type = db.Column(db.String(20))   # 파일 타입 (txt, epub, pdf 등)
+    file_size = db.Column(db.Integer)      # 파일 크기 (바이트)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id'))  # 업로드한 관리자
     
     # 관계
     reading_progress = db.relationship('ReadingProgress', backref='book', lazy=True)
@@ -212,7 +247,7 @@ def login():
         db.session.commit()
         
         # JWT 토큰 생성
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
         
         return jsonify({
             'message': 'Login successful',
@@ -229,7 +264,7 @@ def get_profile():
     """사용자 프로필 조회"""
     try:
         user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        user = User.query.get(int(user_id))
         
         if not user:
             return jsonify({'error': 'User not found'}), 404
@@ -345,7 +380,7 @@ def get_eras():
 def reading_progress(book_id):
     """독서 진행상황 조회/업데이트"""
     try:
-        user_id = get_jwt_identity()
+        user_id = int(get_jwt_identity())
         
         if request.method == 'GET':
             # 진행상황 조회
@@ -394,6 +429,275 @@ def reading_progress(book_id):
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# ===== 관리자 API =====
+
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    """관리자 로그인"""
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        password = data.get('password')
+        
+        if not username or not password:
+            return jsonify({'error': 'Username and password are required'}), 400
+        
+        # 관리자 확인
+        user = User.query.filter_by(username=username, is_admin=True).first()
+        
+        if not user or not user.check_password(password):
+            return jsonify({'error': 'Invalid admin credentials'}), 401
+        
+        if not user.is_active:
+            return jsonify({'error': 'Admin account is deactivated'}), 401
+        
+        # 마지막 로그인 시간 업데이트
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        
+        # JWT 토큰 생성
+        access_token = create_access_token(identity=str(user.id))
+        
+        return jsonify({
+            'message': 'Admin login successful',
+            'access_token': access_token,
+            'user': user.to_dict()
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/dashboard', methods=['GET'])
+@admin_required
+def admin_dashboard():
+    """관리자 대시보드 통계"""
+    try:
+        # 기본 통계 정보
+        total_books = Book.query.count()
+        total_users = User.query.count()
+        total_reviews = Review.query.count()
+        
+        # 최근 추가된 도서 (최근 7일)
+        recent_books = Book.query.filter(
+            Book.created_at >= datetime.utcnow() - timedelta(days=7)
+        ).count()
+        
+        # 인기 도서 (조회수 기준 상위 5개)
+        popular_books = Book.query.order_by(Book.view_count.desc()).limit(5).all()
+        
+        return jsonify({
+            'stats': {
+                'total_books': total_books,
+                'total_users': total_users,
+                'total_reviews': total_reviews,
+                'recent_books': recent_books
+            },
+            'popular_books': [book.to_dict() for book in popular_books]
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/books', methods=['GET', 'POST'])
+@admin_required
+def admin_books():
+    """관리자 도서 관리"""
+    try:
+        if request.method == 'GET':
+            # 도서 목록 조회 (관리자용 - 비공개 도서 포함)
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 20, type=int)
+            search = request.args.get('search', '')
+            
+            query = Book.query
+            
+            if search:
+                query = query.filter(
+                    db.or_(
+                        Book.title.ilike(f'%{search}%'),
+                        Book.author.ilike(f'%{search}%')
+                    )
+                )
+            
+            books = query.order_by(Book.created_at.desc()).paginate(
+                page=page, 
+                per_page=per_page, 
+                error_out=False
+            )
+            
+            return jsonify({
+                'books': [book.to_dict_full() for book in books.items],
+                'total': books.total,
+                'pages': books.pages,
+                'current_page': books.page
+            })
+        
+        elif request.method == 'POST':
+            # 새 도서 생성 (텍스트 입력)
+            data = request.get_json()
+            
+            required_fields = ['title', 'author']
+            for field in required_fields:
+                if not data.get(field):
+                    return jsonify({'error': f'{field} is required'}), 400
+            
+            # 새 도서 생성
+            book = Book(
+                title=data['title'],
+                title_original=data.get('title_original'),
+                author=data['author'],
+                era=data.get('era'),
+                genre=data.get('genre'),
+                description=data.get('description'),
+                content=data.get('content'),
+                content_modern=data.get('content_modern'),
+                publication_date=data.get('publication_date'),
+                is_public=data.get('is_public', False),  # 기본적으로 비공개
+                uploaded_by=int(get_jwt_identity())
+            )
+            
+            db.session.add(book)
+            db.session.commit()
+            
+            return jsonify({
+                'message': 'Book created successfully',
+                'book': book.to_dict_full()
+            }), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/books/upload', methods=['POST'])
+@admin_required
+def admin_upload_book():
+    """관리자 파일 업로드"""
+    try:
+        # 파일 업로드 확인
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        if not allowed_file(file.filename):
+            return jsonify({'error': 'Invalid file type'}), 400
+        
+        # 파일 저장
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(file_path)
+        
+        # 파일 크기 확인
+        file_size = os.path.getsize(file_path)
+        file_type = filename.rsplit('.', 1)[1].lower()
+        
+        # 파일 내용 읽기 (텍스트 파일인 경우)
+        content = ""
+        if file_type in ['txt', 'rtf']:
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                with open(file_path, 'r', encoding='cp949') as f:
+                    content = f.read()
+        
+        # 메타데이터
+        title = request.form.get('title', filename.rsplit('.', 1)[0])
+        author = request.form.get('author', '작자 미상')
+        
+        # 도서 생성
+        book = Book(
+            title=title,
+            title_original=request.form.get('title_original'),
+            author=author,
+            era=request.form.get('era'),
+            genre=request.form.get('genre'),
+            description=request.form.get('description'),
+            content=content,
+            content_modern=request.form.get('content_modern'),
+            publication_date=request.form.get('publication_date'),
+            file_path=unique_filename,
+            file_type=file_type,
+            file_size=file_size,
+            is_public=False,  # 업로드 후 검토 필요
+            uploaded_by=int(get_jwt_identity())
+        )
+        
+        db.session.add(book)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'File uploaded successfully',
+            'book': book.to_dict_full()
+        }), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/books/<int:book_id>', methods=['GET', 'PUT', 'DELETE'])
+@admin_required
+def admin_book_detail(book_id):
+    """관리자 도서 상세 관리"""
+    try:
+        book = Book.query.get(book_id)
+        if not book:
+            return jsonify({'error': 'Book not found'}), 404
+        
+        if request.method == 'GET':
+            return jsonify({'book': book.to_dict_full()})
+        
+        elif request.method == 'PUT':
+            # 도서 정보 수정
+            data = request.get_json()
+            
+            # 수정 가능한 필드들
+            updatable_fields = [
+                'title', 'title_original', 'author', 'era', 'genre', 
+                'description', 'content', 'content_modern', 'publication_date', 'is_public'
+            ]
+            
+            for field in updatable_fields:
+                if field in data:
+                    setattr(book, field, data[field])
+            
+            book.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            return jsonify({
+                'message': 'Book updated successfully',
+                'book': book.to_dict_full()
+            })
+        
+        elif request.method == 'DELETE':
+            # 도서 삭제
+            # 업로드된 파일도 함께 삭제
+            if book.file_path:
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], book.file_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            
+            db.session.delete(book)
+            db.session.commit()
+            
+            return jsonify({'message': 'Book deleted successfully'})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/files/<filename>')
+@admin_required
+def admin_serve_file(filename):
+    """관리자 파일 다운로드"""
+    try:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 404
 
 # 에러 핸들러
 @app.errorhandler(404)
