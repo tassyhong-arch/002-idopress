@@ -10,30 +10,202 @@ function App() {
   const [showEbookViewer, setShowEbookViewer] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [genres, setGenres] = useState([]);
+  const [eras, setEras] = useState([]);
+  const [totalBooks, setTotalBooks] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const categories = [
-    { id: 'all', name: '전체', count: 234 },
-    { id: 'fiction', name: '소설', count: 89 },
-    { id: 'poetry', name: '시', count: 65 },
-    { id: 'philosophy', name: '철학', count: 43 },
-    { id: 'history', name: '역사', count: 37 }
-  ];
+  // 동적 카테고리는 useEffect에서 로드됨
+  const [categories, setCategories] = useState([
+    { id: 'all', name: '전체', count: 0 }
+  ]);
 
   // API 기본 URL
   const API_BASE_URL = 'https://5000-iw0w19imdkc5wjlakkes9-6532622b.e2b.dev/api';
 
-  // 책 목록 로드
-  const loadBooks = async () => {
+  // 책 목록 로드 (검색 및 필터링 포함)
+  const loadBooks = async (searchTerm = '', genre = '', page = 1) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/books`);
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        per_page: '20'
+      });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      if (genre && genre !== 'all') {
+        params.append('genre', genre);
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/books?${params}`);
       const data = await response.json();
-      setBooks(data.books || []);
+      
+      if (searchTerm || genre !== 'all') {
+        setSearchResults(data.books || []);
+        setIsSearching(true);
+      } else {
+        setBooks(data.books || []);
+        setIsSearching(false);
+      }
+      
+      setTotalBooks(data.total || 0);
+      setCurrentPage(data.current_page || 1);
+      setTotalPages(data.pages || 1);
     } catch (error) {
       console.error('책 목록 로드 실패:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  // 장르 목록 로드
+  const loadGenres = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/books/genres`);
+      const data = await response.json();
+      
+      const genreCategories = [
+        { id: 'all', name: '전체', count: totalBooks },
+        ...data.genres.map(genre => ({
+          id: genre,
+          name: genre,
+          count: 0 // 실제 개수는 별도 API가 필요
+        }))
+      ];
+      
+      setCategories(genreCategories);
+    } catch (error) {
+      console.error('장르 목록 로드 실패:', error);
+    }
+  };
+
+  // 검색 실행
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      loadBooks(searchQuery.trim(), selectedCategory, 1);
+    }
+  };
+
+  // 카테고리 선택
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategory(categoryId);
+    setCurrentPage(1);
+    if (categoryId === 'all') {
+      setIsSearching(false);
+      loadBooks('', '', 1);
+    } else {
+      loadBooks(searchQuery, categoryId, 1);
+    }
+  };
+
+  // 페이지 변경
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    loadBooks(searchQuery, selectedCategory, page);
+  };
+
+  // 페이지네이션 컴포넌트
+  const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+    if (totalPages <= 1) return null;
+    
+    const pages = [];
+    const maxPagesToShow = 5;
+    
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    
+    if (endPage - startPage < maxPagesToShow - 1) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return (
+      <div className="flex justify-center items-center space-x-2 mt-8">
+        {/* 이전 버튼 */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1 || loading}
+          className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          이전
+        </button>
+        
+        {/* 페이지 번호 */}
+        {startPage > 1 && (
+          <>
+            <button
+              onClick={() => onPageChange(1)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              1
+            </button>
+            {startPage > 2 && <span className="px-2">…</span>}
+          </>
+        )}
+        
+        {pages.map(page => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            disabled={loading}
+            className={`px-3 py-2 text-sm border rounded-lg disabled:cursor-not-allowed ${
+              page === currentPage
+                ? 'bg-blue-500 text-white border-blue-500'
+                : 'border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+        
+        {endPage < totalPages && (
+          <>
+            {endPage < totalPages - 1 && <span className="px-2">…</span>}
+            <button
+              onClick={() => onPageChange(totalPages)}
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+        
+        {/* 다음 버튼 */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages || loading}
+          className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          다음
+        </button>
+      </div>
+    );
+  };
+
+  // 엔터키 검색
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  // 검색 초기화
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setIsSearching(false);
+    setSearchResults([]);
+    loadBooks('', '', 1);
   };
 
   // 책 상세 정보 로드 및 뷰어 열기
@@ -52,10 +224,21 @@ function App() {
     }
   };
 
-  // 컴포넌트 마운트 시 책 목록 로드
+  // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     loadBooks();
+    loadGenres();
   }, []);
+
+  // 총 도서 수 업데이트 시 카테고리도 업데이트
+  useEffect(() => {
+    if (totalBooks > 0 && categories.length > 0) {
+      setCategories(prev => [
+        { id: 'all', name: '전체', count: totalBooks },
+        ...prev.slice(1)
+      ]);
+    }
+  }, [totalBooks]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -116,16 +299,33 @@ function App() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   placeholder="작품명, 저자명, 또는 키워드를 입력하세요..."
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-lg"
+                  disabled={loading}
                 />
-                <button className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors">
-                  검색
+                <button 
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors disabled:opacity-50"
+                >
+                  {loading ? '검색중...' : '검색'}
                 </button>
               </div>
               
               <div className="text-center text-sm text-gray-600">
-                총 <span className="font-semibold text-blue-700">234권</span>의 고전 작품을 소장하고 있습니다.
+                총 <span className="font-semibold text-blue-700">{totalBooks.toLocaleString()}권</span>의 고전 작품을 소장하고 있습니다.
+                {isSearching && (
+                  <div className="mt-2">
+                    <span className="text-blue-600">검색결과: {(currentPage - 1) * 20 + 1}-{Math.min(currentPage * 20, totalBooks)}권 표시 중 (via {searchQuery || selectedCategory})</span>
+                    <button 
+                      onClick={handleClearSearch}
+                      className="ml-2 text-gray-500 hover:text-gray-700 underline"
+                    >
+                      전체보기
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -138,8 +338,9 @@ function App() {
             {categories.map((category) => (
               <button
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`p-4 rounded-lg border-2 transition-all hover:shadow-md ${
+                onClick={() => handleCategoryChange(category.id)}
+                disabled={loading}
+                className={`p-4 rounded-lg border-2 transition-all hover:shadow-md disabled:opacity-50 ${
                   selectedCategory === category.id
                     ? 'border-blue-500 bg-blue-50 text-blue-700'
                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -152,35 +353,93 @@ function App() {
           </div>
         </section>
 
-        {/* 추천 도서 섹션 */}
+        {/* 도서 목록 섹션 */}
         <section className="mb-12">
-          <h2 className="text-2xl font-serif text-gray-800 mb-6">추천 고전 작품</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {books.slice(0, 6).map((book) => (
-              <div key={book.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-200 hover:border-blue-400">
-                <h3 className="text-xl font-serif text-blue-900 mb-2 hover:text-blue-700 cursor-pointer">
-                  {book.title}
-                </h3>
-                <div className="text-gray-600 mb-2">
-                  <div>저자: {book.author}</div>
-                  <div>시대: {book.era}</div>
-                  <div>장르: {book.genre}</div>
-                </div>
-                <div className="flex justify-between items-center mt-4">
-                  <span className="text-sm text-gray-500">
-                    조회수: {book.view_count?.toLocaleString() || 0}
-                  </span>
-                  <button 
-                    onClick={() => openEbookViewer(book.id)}
-                    className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
-                    disabled={loading}
-                  >
-                    {loading ? '로딩...' : '읽기 →'}
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-serif text-gray-800">
+              {isSearching 
+                ? `검색결과 (${searchQuery || selectedCategory})` 
+                : '추천 고전 작품'
+              }
+            </h2>
+            {isSearching && (
+              <button 
+                onClick={handleClearSearch}
+                className="text-blue-600 hover:text-blue-800 text-sm underline"
+              >
+                전체 도서 보기
+              </button>
+            )}
           </div>
+          
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-gray-500">도서를 불러오는 중...</div>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(isSearching ? searchResults : books).map((book) => (
+                <div key={book.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 border-blue-200 hover:border-blue-400">
+                  <h3 className="text-xl font-serif text-blue-900 mb-2 hover:text-blue-700 cursor-pointer">
+                    {book.title}
+                  </h3>
+                  <div className="text-gray-600 mb-2">
+                    <div>저자: {book.author}</div>
+                    {book.era && <div>시대: {book.era}</div>}
+                    {book.genre && <div>장르: {book.genre}</div>}
+                  </div>
+                  <div className="flex justify-between items-center mt-4">
+                    <span className="text-sm text-gray-500">
+                      조회수: {book.view_count?.toLocaleString() || 0}
+                    </span>
+                    <button 
+                      onClick={() => openEbookViewer(book.id)}
+                      className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                      disabled={loading}
+                    >
+                      {loading ? '로딩...' : '읽기 →'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {(isSearching ? searchResults : books).length === 0 && !loading && (
+            <div className="text-center py-12">
+              <div className="text-gray-500">
+                {isSearching ? '검색 결과가 없습니다.' : '등록된 도서가 없습니다.'}
+              </div>
+            </div>
+          )}
+          
+          {/* 페이지네이션 */}
+          {(isSearching || totalPages > 1) && (
+            <>
+              <Pagination 
+                currentPage={currentPage} 
+                totalPages={totalPages} 
+                onPageChange={handlePageChange} 
+              />
+              
+              {/* 페이지 정보 */}
+              <div className="text-center text-sm text-gray-600 mt-4">
+                {currentPage}페이지 / {totalPages}페이지 전체 ({totalBooks.toLocaleString()}권)
+              </div>
+            </>
+          )}
+          
+          {/* 전체 도서 보기 버튼 (검색이 아닌 경우에만 표시) */}
+          {!isSearching && books.length > 0 && totalPages === 1 && books.length < totalBooks && (
+            <div className="text-center mt-8">
+              <button 
+                onClick={() => handleCategoryChange('all')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-colors"
+              >
+                전체 도서 보기 ({totalBooks}권)
+              </button>
+            </div>
+          )}
         </section>
 
         {/* 최근 추가된 작품 */}
@@ -212,7 +471,7 @@ function App() {
         <section className="mb-12">
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 text-center border border-blue-200">
-              <div className="text-3xl font-bold text-blue-700 mb-2">234</div>
+              <div className="text-3xl font-bold text-blue-700 mb-2">{totalBooks}</div>
               <div className="text-gray-700">총 보유 작품</div>
             </div>
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 text-center border border-green-200">

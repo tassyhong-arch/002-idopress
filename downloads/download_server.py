@@ -42,13 +42,16 @@ class DownloadHandler(SimpleHTTPRequestHandler):
     <div class="download-box">
         <h2>🚀 메인 다운로드 (추천)</h2>
         <div class="file-info">
-            <strong>파일명:</strong> idopress_complete_ftp_v2.tar.gz<br>
-            <strong>크기:</strong> 560KB<br>
-            <strong>포함내용:</strong> 프론트엔드 + 백엔드 + 설정파일 + 이북뷰어 (완전 패키지)
-            <br><strong>🆕 새 기능:</strong> 한국 고전문학 이북 뷰어, 원문/현대어 번역
+            <strong>파일명:</strong> idopress_complete_admin_v3.tar.gz<br>
+            <strong>크기:</strong> 845KB<br>
+            <strong>포함내용:</strong> 프론트엔드 + 백엔드 + 이북뷰어 + 관리자 시스템 (완전 패키지)
+            <br><strong>🔥 최신 기능:</strong> 관리자 패널, 이북 업로드, 도서 관리, 통계 대시보드
+            <br><strong>📚 이북 기능:</strong> 한국 고전문학 뷰어, 원문/현대어 번역
         </div>
-        <a href="idopress_complete_ftp_v2.tar.gz" class="btn" download>📥 완전 패키지 다운로드 (최신)</a>
-        <a href="idopress_complete_ftp.tar.gz" class="btn" style="background: #6b7280;" download>📥 이전 버전 (286KB)</a>
+        <a href="idopress_complete_admin_v3.tar.gz" class="btn" download>📥 관리자 버전 다운로드 (845KB) 🔥</a>
+        <br>
+        <a href="idopress_complete_ftp_v2.tar.gz" class="btn" style="background: #6b7280;" download>📥 이북뷰어 버전 (560KB)</a>
+        <a href="idopress_complete_ftp.tar.gz" class="btn" style="background: #9ca3af;" download>📥 기본 버전 (286KB)</a>
     </div>
     
     <div class="download-box">
