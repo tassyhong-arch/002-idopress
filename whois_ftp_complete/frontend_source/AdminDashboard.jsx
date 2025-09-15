@@ -58,15 +58,9 @@ const AdminDashboard = ({ user, token, onLogout }) => {
           console.log('디버그 정보:', data.debug_info);
         }
       } else {
-        try {
-          const errorData = await response.json();
-          console.error('API 오류 응답:', errorData);
-          const errorMsg = errorData?.error || errorData?.message || response.statusText || '서버 오류';
-          setError(`도서 목록 로드 실패: ${errorMsg}`);
-        } catch (parseError) {
-          console.error('응답 파싱 오류:', parseError);
-          setError(`도서 목록 로드 실패: HTTP ${response.status} - ${response.statusText || '알 수 없는 오류'}`);
-        }
+        const errorData = await response.json();
+        console.error('API 오류 응답:', errorData);
+        setError(`도서 목록 로드 실패: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
       console.error('도서 목록 로드 실패:', error);
@@ -631,18 +625,12 @@ const BookUpload = ({ token, onUploadSuccess }) => {
         try {
           const errorData = await response.json();
           console.error('오류 데이터:', errorData);
-          const errorMsg = errorData?.error || errorData?.message || errorData?.detail || '서버 응답 오류';
-          setMessage(`업로드 실패: ${errorMsg}`);
+          setMessage(`업로드 실패: ${errorData.error || '알 수 없는 오류'}`);
         } catch (parseError) {
           console.error('응답 파싱 오류:', parseError);
-          try {
-            const textResponse = await response.text();
-            console.error('원시 응답:', textResponse);
-            setMessage(`업로드 실패: ${textResponse || `HTTP ${response.status} - ${response.statusText}`}`);
-          } catch (textError) {
-            console.error('텍스트 응답 파싱 오류:', textError);
-            setMessage(`업로드 실패: HTTP ${response.status} - ${response.statusText || '알 수 없는 오류'}`);
-          }
+          const textResponse = await response.text();
+          console.error('원시 응답:', textResponse);
+          setMessage(`업로드 실패: HTTP ${response.status} - ${response.statusText}`);
         }
       }
     } catch (error) {

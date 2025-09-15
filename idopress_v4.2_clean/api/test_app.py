@@ -2,12 +2,13 @@
 # -*- coding: utf-8 -*-
 
 """
-후이즈 호스팅 전용 이도출판 Flask 백엔드
-설정 없이 바로 작동하는 버전
+관리자 업로드 기능 테스트용 간단한 Flask 앱
+SQLite를 사용해서 MySQL 없이도 테스트 가능
 """
 
 import os
 import sys
+import uuid
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
@@ -15,26 +16,18 @@ from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
-import uuid
-
-# PyMySQL을 MySQLdb로 사용
-try:
-    import pymysql
-    pymysql.install_as_MySQLdb()
-except:
-    pass
 
 # Flask 앱 생성
 app = Flask(__name__)
 
-# 후이즈 호스팅 자동 설정
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://idopress_user:idopress123@localhost/idopress'
+# SQLite 테스트 설정
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_idopress.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'idopress-secret-key-2024'
+app.config['JWT_SECRET_KEY'] = 'test-secret-key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 
 # 파일 업로드 설정
-app.config['UPLOAD_FOLDER'] = '/home/계정명/public_html/api/uploads'  # 실제 경로로 변경
+app.config['UPLOAD_FOLDER'] = '/home/user/webapp/whois_ftp_complete/api/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB 제한
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'epub', 'doc', 'docx', 'rtf'}
 
@@ -45,7 +38,7 @@ CORS(app, origins=['*'])
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 
-# 사용자 모델
+# 모델 정의
 class User(db.Model):
     __tablename__ = 'users'
     
@@ -69,7 +62,6 @@ class User(db.Model):
             'is_active': self.is_active
         }
 
-# 도서 모델
 class Book(db.Model):
     __tablename__ = 'books'
     
@@ -130,12 +122,12 @@ def allowed_file(filename):
 @app.route('/')
 def home():
     return """
-    <h1>🎉 이도출판 디지털 장서각 API</h1>
+    <h1>🧪 관리자 업로드 기능 테스트 서버</h1>
     <p>✅ 백엔드 서버가 정상 작동중입니다!</p>
     <ul>
         <li><a href="/api/health">상태 확인</a></li>
         <li><a href="/api/books">도서 목록</a></li>
-        <li><a href="/api/books/genres">장르 목록</a></li>
+        <li>관리자 로그인: admin/admin123</li>
     </ul>
     """
 
@@ -144,97 +136,11 @@ def health_check():
     """서버 상태 확인"""
     return jsonify({
         'status': 'healthy',
-        'message': '이도출판 디지털 장서각 API 서버 정상 작동',
-        'version': 'v4.0-whois',
-        'timestamp': datetime.utcnow().isoformat()
+        'message': '관리자 업로드 기능 테스트 서버 정상 작동',
+        'version': 'test-v4.1',
+        'timestamp': datetime.utcnow().isoformat(),
+        'db_tables': db.engine.table_names()
     })
-
-@app.route('/api/books', methods=['GET'])
-def get_books():
-    """도서 목록 조회"""
-    try:
-        page = request.args.get('page', 1, type=int)
-        per_page = min(request.args.get('per_page', 20, type=int), 100)
-        search = request.args.get('search', '')
-        genre = request.args.get('genre', '')
-        
-        # 기본 쿼리
-        query = Book.query.filter_by(is_public=True)
-        
-        # 검색 필터
-        if search:
-            search_pattern = f'%{search}%'
-            query = query.filter(
-                db.or_(
-                    Book.title.like(search_pattern),
-                    Book.author.like(search_pattern),
-                    Book.description.like(search_pattern)
-                )
-            )
-        
-        # 장르 필터
-        if genre and genre != 'all':
-            query = query.filter(Book.genre == genre)
-        
-        # 정렬 및 페이지네이션
-        query = query.order_by(Book.view_count.desc())
-        total = query.count()
-        
-        books = query.offset((page - 1) * per_page).limit(per_page).all()
-        
-        return jsonify({
-            'books': [book.to_dict() for book in books],
-            'total': total,
-            'pages': (total + per_page - 1) // per_page,
-            'current_page': page,
-            'per_page': per_page
-        })
-    
-    except Exception as e:
-        return jsonify({'error': f'도서 목록 조회 실패: {str(e)}'}), 500
-
-@app.route('/api/books/genres', methods=['GET'])
-def get_genres():
-    """장르 목록 조회"""
-    try:
-        genres_query = db.session.query(Book.genre).filter(
-            Book.genre.isnot(None),
-            Book.is_public == True
-        ).distinct()
-        
-        genre_list = [genre[0] for genre in genres_query if genre[0]]
-        
-        return jsonify({
-            'genres': sorted(genre_list)
-        })
-    
-    except Exception as e:
-        return jsonify({'error': f'장르 목록 조회 실패: {str(e)}'}), 500
-
-@app.route('/api/books/<int:book_id>', methods=['GET'])
-def get_book(book_id):
-    """특정 도서 상세 조회"""
-    try:
-        book = Book.query.get(book_id)
-        
-        if not book or not book.is_public:
-            return jsonify({'error': '도서를 찾을 수 없습니다'}), 404
-        
-        # 조회수 증가
-        book.view_count += 1
-        db.session.commit()
-        
-        # 전체 내용 포함
-        book_data = book.to_dict()
-        book_data.update({
-            'content': book.content,
-            'content_modern': book.content_modern
-        })
-        
-        return jsonify({'book': book_data})
-    
-    except Exception as e:
-        return jsonify({'error': f'도서 조회 실패: {str(e)}'}), 500
 
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
@@ -263,39 +169,18 @@ def admin_login():
     except Exception as e:
         return jsonify({'error': f'로그인 실패: {str(e)}'}), 500
 
-@app.route('/api/admin/dashboard', methods=['GET'])
-@jwt_required()
-def admin_dashboard():
-    """관리자 대시보드 통계"""
+@app.route('/api/books', methods=['GET'])
+def get_books():
+    """도서 목록 조회"""
     try:
-        # 관리자 권한 확인
-        user_id = get_jwt_identity()
-        user = User.query.get(int(user_id))
-        if not user or not user.is_admin:
-            return jsonify({'error': '관리자 권한이 필요합니다'}), 403
-        
-        # 통계 계산
-        total_books = Book.query.count()
-        total_users = User.query.count()
-        public_books = Book.query.filter_by(is_public=True).count()
-        
-        # 최근 7일 추가된 도서
-        from datetime import datetime, timedelta
-        week_ago = datetime.utcnow() - timedelta(days=7)
-        recent_books = Book.query.filter(Book.created_at >= week_ago).count()
-        
+        books = Book.query.filter_by(is_public=True).all()
         return jsonify({
-            'stats': {
-                'total_books': total_books,
-                'total_users': total_users,
-                'public_books': public_books,
-                'recent_books': recent_books,
-                'total_reviews': 0  # 리뷰 테이블이 없어서 0으로 설정
-            }
+            'books': [book.to_dict() for book in books],
+            'total': len(books),
+            'message': 'SQLite 테스트 데이터베이스 사용중'
         })
-    
     except Exception as e:
-        return jsonify({'error': f'대시보드 통계 조회 실패: {str(e)}'}), 500
+        return jsonify({'error': f'도서 목록 조회 실패: {str(e)}'}), 500
 
 @app.route('/api/admin/books', methods=['GET', 'POST'])
 @jwt_required()
@@ -310,49 +195,11 @@ def admin_books():
         
         if request.method == 'GET':
             # 관리자용 도서 목록 (비공개 포함)
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', 20, type=int)
-            search = request.args.get('search', '')
-            
-            query = Book.query
-            
-            # 전체 도서 수 확인 (디버깅)
-            total_books_count = Book.query.count()
-            print(f"DEBUG: 전체 도서 수: {total_books_count}")
-            
-            if search:
-                search_pattern = f'%{search}%'
-                query = query.filter(
-                    db.or_(
-                        Book.title.like(search_pattern),
-                        Book.author.like(search_pattern)
-                    )
-                )
-            
-            books = query.order_by(Book.created_at.desc()).paginate(
-                page=page, 
-                per_page=per_page, 
-                error_out=False
-            )
-            
-            print(f"DEBUG: 페이지네이션 결과 - 총 {books.total}권, 현재 페이지 {books.page}")
-            print(f"DEBUG: 현재 페이지 도서 수: {len(books.items)}")
-            
-            books_data = []
-            for book in books.items:
-                book_dict = book.to_dict_full()
-                books_data.append(book_dict)
-                print(f"DEBUG: 도서 - {book.title} (ID: {book.id})")
-            
+            books = Book.query.all()
             return jsonify({
-                'books': books_data,
-                'total': books.total,
-                'pages': books.pages,
-                'current_page': books.page,
-                'debug_info': {
-                    'total_books_in_db': total_books_count,
-                    'returned_books_count': len(books_data)
-                }
+                'books': [book.to_dict_full() for book in books],
+                'total': len(books),
+                'message': '관리자 전용 도서 목록 (비공개 포함)'
             })
         
         elif request.method == 'POST':
@@ -360,12 +207,8 @@ def admin_books():
             data = request.get_json()
             
             # 필수 필드 검증
-            print(f"DEBUG: 받은 데이터: {data}")
-            
-            if not data.get('title'):
-                return jsonify({'error': '제목은 필수 입력 항목입니다'}), 400
-            if not data.get('author'):
-                return jsonify({'error': '저자는 필수 입력 항목입니다'}), 400
+            if not data.get('title') or not data.get('author'):
+                return jsonify({'error': '제목과 저자는 필수입니다'}), 400
             
             # 새 도서 생성
             book = Book(
@@ -385,23 +228,15 @@ def admin_books():
             db.session.add(book)
             db.session.commit()
             
-            print(f"DEBUG: 도서 생성 성공 - ID: {book.id}, 제목: {book.title}")
             return jsonify({
-                'message': '도서가 성공적으로 추가되었습니다',
-                'book': book.to_dict_full()
+                'message': '✅ 도서가 성공적으로 추가되었습니다! 이제 전체 도서목록에서 확인 가능합니다.',
+                'book': book.to_dict_full(),
+                'test_url': '/api/books'
             }), 201
     
     except Exception as e:
         db.session.rollback()
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f"DEBUG: 도서 관리 오류 - {str(e)}")
-        print(f"DEBUG: 오류 상세: {error_trace}")
-        return jsonify({
-            'error': f'도서 관리 실패: {str(e)}',
-            'detail': str(e),
-            'type': type(e).__name__
-        }), 500
+        return jsonify({'error': f'도서 관리 실패: {str(e)}'}), 500
 
 @app.route('/api/admin/books/upload', methods=['POST'])
 @jwt_required()
@@ -453,12 +288,12 @@ def admin_upload_book():
             try:
                 # UTF-8로 먼저 시도
                 with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()[:10000]  # 처음 10000자만
+                    content = f.read()[:1000]  # 처음 1000자만
             except UnicodeDecodeError:
                 try:
                     # CP949로 시도
                     with open(file_path, 'r', encoding='cp949') as f:
-                        content = f.read()[:10000]
+                        content = f.read()[:1000]
                 except:
                     content = "파일 내용을 읽을 수 없습니다"
         
@@ -488,88 +323,58 @@ def admin_upload_book():
         db.session.commit()
         
         return jsonify({
-            'message': '파일이 성공적으로 업로드되었습니다',
-            'book': book.to_dict_full()
+            'message': '✅ 파일이 성공적으로 업로드되었습니다! 전체 도서목록에서 확인 가능합니다.',
+            'book': book.to_dict_full(),
+            'file_info': {
+                'original_name': filename,
+                'saved_name': unique_filename,
+                'size': file_size,
+                'type': file_type,
+                'content_preview': content[:100] + '...' if len(content) > 100 else content
+            },
+            'test_url': '/api/books'
         }), 201
     
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'파일 업로드 실패: {str(e)}'}), 500
 
-@app.route('/api/admin/books/<int:book_id>', methods=['PUT', 'DELETE'])
-@jwt_required()
-def admin_book_detail(book_id):
-    """관리자 도서 상세 관리"""
-    try:
-        # 관리자 권한 확인
-        user_id = get_jwt_identity()
-        user = User.query.get(int(user_id))
-        if not user or not user.is_admin:
-            return jsonify({'error': '관리자 권한이 필요합니다'}), 403
-        
-        book = Book.query.get(book_id)
-        if not book:
-            return jsonify({'error': '도서를 찾을 수 없습니다'}), 404
-        
-        if request.method == 'PUT':
-            # 도서 정보 수정
-            data = request.get_json()
-            
-            # 수정 가능한 필드들
-            updatable_fields = [
-                'title', 'title_original', 'author', 'era', 'genre', 
-                'description', 'content', 'content_modern', 'publication_date', 'is_public'
-            ]
-            
-            for field in updatable_fields:
-                if field in data:
-                    setattr(book, field, data[field])
-            
-            book.updated_at = datetime.utcnow()
-            db.session.commit()
-            
-            return jsonify({
-                'message': '도서 정보가 수정되었습니다',
-                'book': book.to_dict_full()
-            })
-        
-        elif request.method == 'DELETE':
-            # 도서 삭제
-            # 업로드된 파일도 함께 삭제
-            if book.file_path:
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], book.file_path)
-                if os.path.exists(file_path):
-                    try:
-                        os.remove(file_path)
-                    except:
-                        pass  # 파일 삭제 실패해도 DB에서는 삭제
-            
-            db.session.delete(book)
-            db.session.commit()
-            
-            return jsonify({'message': '도서가 삭제되었습니다'})
-    
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': f'도서 관리 실패: {str(e)}'}), 500
-
-# 에러 핸들러
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': '요청한 페이지를 찾을 수 없습니다'}), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({'error': '서버 내부 오류가 발생했습니다'}), 500
-
-# cPanel Python App에서 사용할 application 객체
-application = app
-
-# 로컬 테스트용
-if __name__ == '__main__':
+# 초기화
+def init_test_db():
+    """테스트용 데이터베이스 초기화"""
     with app.app_context():
-        try:
-            db.create_all()
-        except:
-            pass
-    app.run(debug=False, host='0.0.0.0', port=5000)
+        db.create_all()
+        
+        # 관리자 계정 생성 (없으면)
+        admin_user = User.query.filter_by(username='admin').first()
+        if not admin_user:
+            admin_user = User(
+                username='admin',
+                email='admin@test.com',
+                password_hash=generate_password_hash('admin123'),
+                is_admin=True,
+                is_active=True
+            )
+            db.session.add(admin_user)
+            
+            # 테스트 도서 추가
+            test_book = Book(
+                title='테스트 도서',
+                author='작자 미상',
+                genre='문학',
+                description='관리자 기능 테스트용 도서입니다.',
+                content='이것은 테스트 내용입니다.',
+                is_public=True,
+                uploaded_by=1
+            )
+            db.session.add(test_book)
+            db.session.commit()
+            print("✅ 테스트용 관리자 계정과 샘플 도서가 생성되었습니다.")
+            print("   로그인: admin / admin123")
+
+if __name__ == '__main__':
+    init_test_db()
+    print("🚀 관리자 업로드 기능 테스트 서버 시작...")
+    print("   접속: http://localhost:5000")
+    print("   관리자 로그인: admin / admin123")
+    app.run(debug=True, host='0.0.0.0', port=5000)

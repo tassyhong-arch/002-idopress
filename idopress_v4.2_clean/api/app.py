@@ -263,40 +263,6 @@ def admin_login():
     except Exception as e:
         return jsonify({'error': f'로그인 실패: {str(e)}'}), 500
 
-@app.route('/api/admin/dashboard', methods=['GET'])
-@jwt_required()
-def admin_dashboard():
-    """관리자 대시보드 통계"""
-    try:
-        # 관리자 권한 확인
-        user_id = get_jwt_identity()
-        user = User.query.get(int(user_id))
-        if not user or not user.is_admin:
-            return jsonify({'error': '관리자 권한이 필요합니다'}), 403
-        
-        # 통계 계산
-        total_books = Book.query.count()
-        total_users = User.query.count()
-        public_books = Book.query.filter_by(is_public=True).count()
-        
-        # 최근 7일 추가된 도서
-        from datetime import datetime, timedelta
-        week_ago = datetime.utcnow() - timedelta(days=7)
-        recent_books = Book.query.filter(Book.created_at >= week_ago).count()
-        
-        return jsonify({
-            'stats': {
-                'total_books': total_books,
-                'total_users': total_users,
-                'public_books': public_books,
-                'recent_books': recent_books,
-                'total_reviews': 0  # 리뷰 테이블이 없어서 0으로 설정
-            }
-        })
-    
-    except Exception as e:
-        return jsonify({'error': f'대시보드 통계 조회 실패: {str(e)}'}), 500
-
 @app.route('/api/admin/books', methods=['GET', 'POST'])
 @jwt_required()
 def admin_books():
@@ -316,10 +282,6 @@ def admin_books():
             
             query = Book.query
             
-            # 전체 도서 수 확인 (디버깅)
-            total_books_count = Book.query.count()
-            print(f"DEBUG: 전체 도서 수: {total_books_count}")
-            
             if search:
                 search_pattern = f'%{search}%'
                 query = query.filter(
@@ -335,24 +297,11 @@ def admin_books():
                 error_out=False
             )
             
-            print(f"DEBUG: 페이지네이션 결과 - 총 {books.total}권, 현재 페이지 {books.page}")
-            print(f"DEBUG: 현재 페이지 도서 수: {len(books.items)}")
-            
-            books_data = []
-            for book in books.items:
-                book_dict = book.to_dict_full()
-                books_data.append(book_dict)
-                print(f"DEBUG: 도서 - {book.title} (ID: {book.id})")
-            
             return jsonify({
-                'books': books_data,
+                'books': [book.to_dict_full() for book in books.items],
                 'total': books.total,
                 'pages': books.pages,
-                'current_page': books.page,
-                'debug_info': {
-                    'total_books_in_db': total_books_count,
-                    'returned_books_count': len(books_data)
-                }
+                'current_page': books.page
             })
         
         elif request.method == 'POST':
@@ -360,12 +309,8 @@ def admin_books():
             data = request.get_json()
             
             # 필수 필드 검증
-            print(f"DEBUG: 받은 데이터: {data}")
-            
-            if not data.get('title'):
-                return jsonify({'error': '제목은 필수 입력 항목입니다'}), 400
-            if not data.get('author'):
-                return jsonify({'error': '저자는 필수 입력 항목입니다'}), 400
+            if not data.get('title') or not data.get('author'):
+                return jsonify({'error': '제목과 저자는 필수입니다'}), 400
             
             # 새 도서 생성
             book = Book(
@@ -385,7 +330,6 @@ def admin_books():
             db.session.add(book)
             db.session.commit()
             
-            print(f"DEBUG: 도서 생성 성공 - ID: {book.id}, 제목: {book.title}")
             return jsonify({
                 'message': '도서가 성공적으로 추가되었습니다',
                 'book': book.to_dict_full()
@@ -393,15 +337,7 @@ def admin_books():
     
     except Exception as e:
         db.session.rollback()
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f"DEBUG: 도서 관리 오류 - {str(e)}")
-        print(f"DEBUG: 오류 상세: {error_trace}")
-        return jsonify({
-            'error': f'도서 관리 실패: {str(e)}',
-            'detail': str(e),
-            'type': type(e).__name__
-        }), 500
+        return jsonify({'error': f'도서 관리 실패: {str(e)}'}), 500
 
 @app.route('/api/admin/books/upload', methods=['POST'])
 @jwt_required()

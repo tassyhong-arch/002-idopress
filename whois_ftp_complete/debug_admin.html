@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이도출판 관리자 디버그 도구</title>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        .section { margin: 30px 0; padding: 20px; border: 2px solid #ddd; border-radius: 8px; }
+        .section h2 { color: #34495e; margin-top: 0; }
+        button { 
+            background: #3498db; color: white; border: none; padding: 12px 20px; 
+            border-radius: 5px; cursor: pointer; margin: 5px; font-size: 14px;
+        }
+        button:hover { background: #2980b9; }
+        .success { background: #2ecc71; }
+        .success:hover { background: #27ae60; }
+        .danger { background: #e74c3c; }
+        .danger:hover { background: #c0392b; }
+        .result { 
+            background: #ecf0f1; padding: 15px; margin: 10px 0; 
+            border-radius: 5px; min-height: 60px; white-space: pre-wrap; 
+            font-family: 'Courier New', monospace; font-size: 12px;
+        }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
+        .status.ok { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        input, select, textarea { 
+            width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; 
+            border-radius: 4px; box-sizing: border-box; 
+        }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #2c3e50; }
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 이도출판 관리자 디버그 도구</h1>
+        
+        <!-- API 상태 확인 섹션 -->
+        <div class="section">
+            <h2>🌐 1. API 서버 상태 확인</h2>
+            <button onclick="checkApiHealth()">API 헬스 체크</button>
+            <button onclick="checkApiBooks()">도서 목록 확인</button>
+            <button onclick="checkApiGenres()">장르 목록 확인</button>
+            <div id="api-results" class="result">테스트 결과가 여기에 표시됩니다...</div>
+        </div>
+
+        <!-- 관리자 로그인 섹션 -->
+        <div class="section">
+            <h2>🔑 2. 관리자 로그인 테스트</h2>
+            <div class="two-column">
+                <div>
+                    <label>사용자명:</label>
+                    <input type="text" id="username" value="admin" placeholder="관리자 사용자명">
+                </div>
+                <div>
+                    <label>비밀번호:</label>
+                    <input type="password" id="password" value="admin123" placeholder="비밀번호">
+                </div>
+            </div>
+            <button onclick="testLogin()" class="success">로그인 테스트</button>
+            <button onclick="checkStoredToken()">저장된 토큰 확인</button>
+            <button onclick="clearToken()" class="danger">토큰 초기화</button>
+            <div id="login-results" class="result">로그인 테스트 결과가 여기에 표시됩니다...</div>
+        </div>
+
+        <!-- 도서 업로드 테스트 섹션 -->
+        <div class="section">
+            <h2>📚 3. 도서 업로드 테스트</h2>
+            <div class="two-column">
+                <div>
+                    <label>제목:</label>
+                    <input type="text" id="book-title" value="테스트 도서" placeholder="도서 제목">
+                    <label>저자:</label>
+                    <input type="text" id="book-author" value="테스트 작가" placeholder="저자명">
+                    <label>장르:</label>
+                    <select id="book-genre">
+                        <option value="">선택하세요</option>
+                        <option value="문학">문학</option>
+                        <option value="역사">역사</option>
+                        <option value="철학">철학</option>
+                        <option value="종교">종교</option>
+                        <option value="과학">과학</option>
+                        <option value="예술">예술</option>
+                        <option value="정치">정치</option>
+                        <option value="경제">경제</option>
+                        <option value="사회">사회</option>
+                        <option value="기타">기타</option>
+                    </select>
+                </div>
+                <div>
+                    <label>작품 소개:</label>
+                    <textarea id="book-description" rows="3" placeholder="작품 소개를 입력하세요...">테스트용 도서입니다.</textarea>
+                    <label>원문 내용:</label>
+                    <textarea id="book-content" rows="4" placeholder="원문 내용을 입력하세요...">이것은 테스트 도서의 내용입니다.</textarea>
+                </div>
+            </div>
+            <button onclick="testBookUpload()" class="success">도서 업로드 테스트</button>
+            <button onclick="testMinimalUpload()">최소 정보로 업로드</button>
+            <div id="upload-results" class="result">업로드 테스트 결과가 여기에 표시됩니다...</div>
+        </div>
+
+        <!-- 데이터베이스 확인 섹션 -->
+        <div class="section">
+            <h2>💾 4. 데이터베이스 상태 확인</h2>
+            <button onclick="checkBookCount()">총 도서 수 확인</button>
+            <button onclick="checkRecentBooks()">최근 도서 확인</button>
+            <button onclick="checkAdminUsers()">관리자 계정 확인</button>
+            <div id="db-results" class="result">데이터베이스 상태 확인 결과가 여기에 표시됩니다...</div>
+        </div>
+
+        <!-- 종합 진단 섹션 -->
+        <div class="section">
+            <h2>🏥 5. 종합 진단 실행</h2>
+            <button onclick="runFullDiagnosis()" style="background: #9b59b6; padding: 15px 30px; font-size: 16px;">🔍 전체 진단 실행</button>
+            <div id="diagnosis-results" class="result">종합 진단 결과가 여기에 표시됩니다...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let adminToken = null;
+
+        // 결과 표시 함수
+        function displayResult(containerId, message, isError = false) {
+            const container = document.getElementById(containerId);
+            const timestamp = new Date().toLocaleTimeString();
+            const status = isError ? '❌ 오류' : '✅ 성공';
+            container.textContent = `[${timestamp}] ${status}\n${message}`;
+            container.style.background = isError ? '#f8d7da' : '#d4edda';
+        }
+
+        // 1. API 상태 확인
+        async function checkApiHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('api-results', `API 서버 정상 작동\n응답: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    displayResult('api-results', `API 서버 오류: ${response.status} - ${response.statusText}`, true);
+                }
+            } catch (error) {
+                displayResult('api-results', `API 연결 실패: ${error.message}`, true);
+            }
+        }
+
+        async function checkApiBooks() {
+            try {
+                const response = await fetch(`${API_BASE}/books`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('api-results', `도서 API 정상\n총 ${data.books?.length || 0}권 조회됨\n응답: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    displayResult('api-results', `도서 API 오류: ${response.status} - ${response.statusText}`, true);
+                }
+            } catch (error) {
+                displayResult('api-results', `도서 API 연결 실패: ${error.message}`, true);
+            }
+        }
+
+        async function checkApiGenres() {
+            try {
+                const response = await fetch(`${API_BASE}/books/genres`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('api-results', `장르 API 정상\n장르 목록: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    displayResult('api-results', `장르 API 오류: ${response.status} - ${response.statusText}`, true);
+                }
+            } catch (error) {
+                displayResult('api-results', `장르 API 연결 실패: ${error.message}`, true);
+            }
+        }
+
+        // 2. 관리자 로그인
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    adminToken = data.access_token;
+                    localStorage.setItem('admin_token', adminToken);
+                    displayResult('login-results', `로그인 성공!\n토큰: ${adminToken.substring(0, 20)}...\n사용자: ${JSON.stringify(data.user, null, 2)}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    displayResult('login-results', `로그인 실패: ${response.status} - ${errorData.error || response.statusText}`, true);
+                }
+            } catch (error) {
+                displayResult('login-results', `로그인 요청 실패: ${error.message}`, true);
+            }
+        }
+
+        function checkStoredToken() {
+            const token = localStorage.getItem('admin_token');
+            if (token) {
+                adminToken = token;
+                displayResult('login-results', `저장된 토큰 발견: ${token.substring(0, 20)}...`);
+            } else {
+                displayResult('login-results', '저장된 토큰이 없습니다.', true);
+            }
+        }
+
+        function clearToken() {
+            localStorage.removeItem('admin_token');
+            adminToken = null;
+            displayResult('login-results', '토큰이 초기화되었습니다.');
+        }
+
+        // 3. 도서 업로드 테스트
+        async function testBookUpload() {
+            if (!adminToken) {
+                displayResult('upload-results', '먼저 관리자 로그인을 해주세요.', true);
+                return;
+            }
+
+            const bookData = {
+                title: document.getElementById('book-title').value,
+                author: document.getElementById('book-author').value,
+                genre: document.getElementById('book-genre').value,
+                description: document.getElementById('book-description').value,
+                content: document.getElementById('book-content').value,
+                is_public: true
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/books`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(bookData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('upload-results', `도서 업로드 성공!\n응답: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMsg = errorData?.error || errorData?.message || response.statusText;
+                    displayResult('upload-results', `업로드 실패: ${errorMsg}\n상태: ${response.status}\n전체 응답: ${JSON.stringify(errorData, null, 2)}`, true);
+                }
+            } catch (error) {
+                displayResult('upload-results', `업로드 요청 실패: ${error.message}`, true);
+            }
+        }
+
+        async function testMinimalUpload() {
+            if (!adminToken) {
+                displayResult('upload-results', '먼저 관리자 로그인을 해주세요.', true);
+                return;
+            }
+
+            const minimalData = {
+                title: '테스트',
+                author: '테스트',
+                genre: '문학',
+                is_public: true
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/books`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(minimalData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('upload-results', `최소 정보 업로드 성공!\n응답: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMsg = errorData?.error || errorData?.message || response.statusText;
+                    displayResult('upload-results', `최소 업로드 실패: ${errorMsg}\n상태: ${response.status}`, true);
+                }
+            } catch (error) {
+                displayResult('upload-results', `최소 업로드 요청 실패: ${error.message}`, true);
+            }
+        }
+
+        // 4. 데이터베이스 상태 확인
+        async function checkBookCount() {
+            if (!adminToken) {
+                displayResult('db-results', '먼저 관리자 로그인을 해주세요.', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/books`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('db-results', `데이터베이스 도서 확인\n총 ${data.total || 0}권\n현재 페이지: ${data.books?.length || 0}권\n디버그 정보: ${JSON.stringify(data.debug_info || {}, null, 2)}`);
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    displayResult('db-results', `도서 수 확인 실패: ${errorData.error || response.statusText}`, true);
+                }
+            } catch (error) {
+                displayResult('db-results', `도서 수 확인 요청 실패: ${error.message}`, true);
+            }
+        }
+
+        async function checkRecentBooks() {
+            try {
+                const response = await fetch(`${API_BASE}/books?limit=5`);
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('db-results', `최근 도서 확인\n공개 도서: ${data.books?.length || 0}권\n응답: ${JSON.stringify(data, null, 2)}`);
+                } else {
+                    displayResult('db-results', `최근 도서 확인 실패: ${response.status}`, true);
+                }
+            } catch (error) {
+                displayResult('db-results', `최근 도서 확인 요청 실패: ${error.message}`, true);
+            }
+        }
+
+        async function checkAdminUsers() {
+            if (!adminToken) {
+                displayResult('db-results', '먼저 관리자 로그인을 해주세요.', true);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/admin/stats`, {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayResult('db-results', `관리자 통계 확인\n${JSON.stringify(data, null, 2)}`);
+                } else {
+                    displayResult('db-results', `관리자 통계 확인 실패: ${response.status}`, true);
+                }
+            } catch (error) {
+                displayResult('db-results', `관리자 통계 확인 요청 실패: ${error.message}`, true);
+            }
+        }
+
+        // 5. 종합 진단
+        async function runFullDiagnosis() {
+            displayResult('diagnosis-results', '🔍 종합 진단을 시작합니다...');
+            
+            let report = '=== 이도출판 관리자 패널 종합 진단 보고서 ===\n\n';
+            
+            // API 헬스 체크
+            report += '1. API 서버 상태:\n';
+            try {
+                const healthResponse = await fetch(`${API_BASE}/health`);
+                if (healthResponse.ok) {
+                    const healthData = await healthResponse.json();
+                    report += '✅ API 서버 정상 작동\n';
+                } else {
+                    report += `❌ API 서버 오류: ${healthResponse.status}\n`;
+                }
+            } catch (error) {
+                report += `❌ API 서버 연결 실패: ${error.message}\n`;
+            }
+            
+            // 도서 API 체크
+            report += '\n2. 도서 API 상태:\n';
+            try {
+                const booksResponse = await fetch(`${API_BASE}/books`);
+                if (booksResponse.ok) {
+                    const booksData = await booksResponse.json();
+                    report += `✅ 공개 도서 API 정상 (${booksData.books?.length || 0}권)\n`;
+                } else {
+                    report += `❌ 도서 API 오류: ${booksResponse.status}\n`;
+                }
+            } catch (error) {
+                report += `❌ 도서 API 연결 실패: ${error.message}\n`;
+            }
+            
+            // 관리자 로그인 체크
+            report += '\n3. 관리자 로그인 상태:\n';
+            const storedToken = localStorage.getItem('admin_token');
+            if (storedToken) {
+                report += '✅ 저장된 토큰 존재\n';
+                adminToken = storedToken;
+                
+                // 관리자 도서 목록 확인
+                try {
+                    const adminBooksResponse = await fetch(`${API_BASE}/admin/books`, {
+                        headers: { 'Authorization': `Bearer ${adminToken}` }
+                    });
+                    
+                    if (adminBooksResponse.ok) {
+                        const adminBooksData = await adminBooksResponse.json();
+                        report += `✅ 관리자 도서 목록 접근 성공 (${adminBooksData.total || 0}권)\n`;
+                        if (adminBooksData.debug_info) {
+                            report += `   데이터베이스 총 도서: ${adminBooksData.debug_info.total_books_in_db}\n`;
+                            report += `   반환된 도서: ${adminBooksData.debug_info.returned_books_count}\n`;
+                        }
+                    } else {
+                        report += `❌ 관리자 도서 목록 접근 실패: ${adminBooksResponse.status}\n`;
+                    }
+                } catch (error) {
+                    report += `❌ 관리자 API 연결 실패: ${error.message}\n`;
+                }
+            } else {
+                report += '❌ 저장된 관리자 토큰 없음\n';
+            }
+            
+            // 최종 결론
+            report += '\n=== 결론 및 권장 사항 ===\n';
+            report += '위 결과를 확인하여 다음 사항을 점검하세요:\n';
+            report += '1. API 서버가 정상 작동하는가?\n';
+            report += '2. 관리자 로그인이 정상적으로 되는가?\n';
+            report += '3. 데이터베이스에 도서 데이터가 있는가?\n';
+            report += '4. 관리자 권한으로 도서 목록에 접근할 수 있는가?\n';
+            
+            displayResult('diagnosis-results', report);
+        }
+
+        // 페이지 로드 시 저장된 토큰 확인
+        window.onload = function() {
+            checkStoredToken();
+        };
+    </script>
+</body>
+</html>
