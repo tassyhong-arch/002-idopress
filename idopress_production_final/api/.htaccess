@@ -1,0 +1,55 @@
+# API 폴더 .htaccess 설정
+
+# Flask 앱으로 모든 요청 전달
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Python 앱으로 모든 요청 전달 (후이즈 호스팅)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ app.py [L,QSA]
+</IfModule>
+
+# CORS 설정
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    
+    # Preflight 요청 처리
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+
+# Python 파일 실행 설정
+AddHandler cgi-script .py
+Options +ExecCGI
+
+# 민감한 파일 접근 차단
+<Files "*.pyc">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.log">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# 업로드 폴더 보안
+<Directory "uploads">
+    Options -Indexes
+    <Files "*">
+        Order allow,deny
+        Allow from all
+    </Files>
+    <FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</Directory>

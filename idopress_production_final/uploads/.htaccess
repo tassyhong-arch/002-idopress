@@ -1,0 +1,28 @@
+# 업로드 폴더 보안 설정
+
+# 디렉토리 리스팅 비활성화
+Options -Indexes
+
+# 실행 가능한 파일 차단
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi|exe)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 허용된 파일 형식만 접근 가능
+<FilesMatch "\.(txt|pdf|epub|doc|docx|rtf|jpg|jpeg|png|gif)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# 기본적으로 모든 파일 차단
+<Files "*">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# 허용된 확장자만 다시 허용
+<FilesMatch "\.(txt|pdf|epub|doc|docx|rtf)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>

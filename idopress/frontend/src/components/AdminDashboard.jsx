@@ -335,15 +335,15 @@ const BooksManagement = ({ books, loading, onRefresh, token }) => {
       )}
       
       {books.length > 0 && (
-    <div className="bg-white shadow overflow-hidden sm:rounded-md">
-      <div className="px-4 py-5 sm:px-6">
-        <h3 className="text-lg leading-6 font-medium text-gray-900">도서 관리</h3>
-        <p className="mt-1 max-w-2xl text-sm text-gray-500">
-          등록된 모든 도서를 관리할 수 있습니다.
-        </p>
-      </div>
-      
-      <ul className="divide-y divide-gray-200">
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">도서 관리</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">
+              등록된 모든 도서를 관리할 수 있습니다.
+            </p>
+          </div>
+          
+          <ul className="divide-y divide-gray-200">
         {books.map((book) => (
           <li key={book.id}>
             <div className="px-4 py-4 sm:px-6">
@@ -390,7 +390,9 @@ const BooksManagement = ({ books, loading, onRefresh, token }) => {
             </div>
           </li>
         ))}
-      </ul>
+          </ul>
+        </div>
+      )}
 
       {/* 도서 수정 모달 */}
       {editingBook && (
@@ -527,7 +529,6 @@ const BooksManagement = ({ books, loading, onRefresh, token }) => {
             </div>
           </div>
         </div>
-      )}
       )}
     </>
   );

@@ -1,0 +1,76 @@
+# 이도출판 메인 .htaccess 설정
+
+# React Router를 위한 리다이렉트 설정
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # API 요청은 api 폴더로 전달
+    RewriteRule ^api/(.*)$ api/$1 [L,QSA]
+    
+    # React 앱을 위한 fallback (API가 아닌 모든 요청)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/api/
+    RewriteRule . /index.html [L]
+</IfModule>
+
+# CORS 헤더 설정
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    
+    # OPTIONS 요청에 대한 응답
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+
+# 파일 압축 설정
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+</IfModule>
+
+# 캐시 설정
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+</IfModule>
+
+# 보안 설정
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options DENY
+    Header always set X-Content-Type-Options nosniff
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 민감한 파일 접근 차단
+<Files "*.sql">
+    Order allow,deny
+    Deny from all
+</Files>
+
+<Files "*.log">
+    Order allow,deny  
+    Deny from all
+</Files>
+
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
